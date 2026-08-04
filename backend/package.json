@@ -1,0 +1,47 @@
+{
+  "name": "@cfcb/backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "prisma:validate": "prisma validate --schema ../database/prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema ../database/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@cfcb/shared": "0.1.0",
+    "@nestjs/common": "^11.1.5",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.5",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/platform-express": "^11.1.5",
+    "@nestjs/swagger": "^11.2.0",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "argon2": "^0.45.1",
+    "bullmq": "^6.0.7",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
+    "pg": "^8.22.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.7",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.1.0",
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^3.2.4",
+    "prisma": "^7.9.1",
+    "supertest": "^7.2.2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

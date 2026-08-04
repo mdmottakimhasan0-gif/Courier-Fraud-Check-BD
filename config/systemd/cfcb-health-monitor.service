@@ -1,0 +1,13 @@
+[Unit]
+Description=Courier Fraud Check BD health monitor
+After=network.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/var/www/courier-fraud-check-bd/.env
+ExecStart=/var/www/courier-fraud-check-bd/current/scripts/monitoring/health-check.sh
+User=www-data
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target

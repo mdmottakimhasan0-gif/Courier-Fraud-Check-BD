@@ -1,0 +1,22 @@
+# Production Checklist
+
+- Node.js 22+ installed
+- npm 10+ installed
+- PostgreSQL configured and backed up
+- Redis configured and monitored
+- PM2 processes configured
+- Nginx HTTPS proxy configured
+- Let's Encrypt renewal tested
+- Environment variables validated
+- Domain and DNS configured
+- Firewall allows only required ports
+- CORS origins restricted
+- Secure cookies configured
+- Rate limiting enabled
+- Logs rotated and retained
+- Health endpoints monitored
+- Backup restore tested
+- `npm run lint` passed
+- `npm run typecheck` passed
+- `npm run test` passed
+- `npm run build` passed

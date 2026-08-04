@@ -1,0 +1,78 @@
+name: Production Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: Git ref to deploy
+        required: true
+        default: main
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify
+        run: |
+          npm run lint
+          npm run typecheck
+          npm run test
+          npm run build
+
+      - name: Package release
+        run: tar --exclude=node_modules --exclude=.git -czf cfcb-release.tar.gz .
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cfcb-release
+          path: cfcb-release.tar.gz
+          retention-days: 7
+
+  deploy:
+    needs: build-release
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cfcb-release
+
+      - name: Copy release to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          source: cfcb-release.tar.gz
+          target: /tmp/cfcb-release
+
+      - name: Deploy with rollback preparation
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            mkdir -p /tmp/cfcb-unpacked
+            tar -xzf /tmp/cfcb-release/cfcb-release.tar.gz -C /tmp/cfcb-unpacked
+            cd /tmp/cfcb-unpacked
+            APP_DIR=/var/www/courier-fraud-check-bd ./scripts/deployment/deploy-production.sh
