@@ -105,6 +105,8 @@ export function endpointForModule(title: string, admin: boolean): string {
     if (slug.includes("session") || slug.includes("security")) return "/auth/sessions";
     if (slug.includes("api key")) return "/admin/api-keys";
     if (slug.includes("merchant")) return "/admin/courier-credentials";
+    if (slug.includes("courier reports")) return "/courier-orders/reports/summary";
+    if (slug.includes("courier orders")) return "/courier-orders";
     if (slug.includes("notification")) return "/admin/announcements";
     return "/health";
   }

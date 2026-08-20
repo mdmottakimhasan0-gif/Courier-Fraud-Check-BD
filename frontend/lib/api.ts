@@ -67,6 +67,18 @@ export const fraudApi = {
   details: (searchId: string) => apiRequest(`/fraud-search/${searchId}`)
 };
 
+export const courierOrdersApi = {
+  credentials: () => apiRequest("/courier-orders/credentials"),
+  saveCredential: (body: unknown) => apiRequest("/courier-orders/credentials", { method: "POST", body }),
+  riskCheck: (phoneNumber: string) => apiRequest("/courier-orders/risk-check", { method: "POST", body: { phoneNumber } }),
+  createOrder: (body: unknown) => apiRequest("/courier-orders", { method: "POST", body }),
+  list: () => apiRequest("/courier-orders"),
+  details: (orderId: string) => apiRequest(`/courier-orders/${orderId}`),
+  refreshShipment: (shipmentId: string) => apiRequest(`/courier-orders/shipments/${shipmentId}/refresh`, { method: "POST" }),
+  reports: () => apiRequest("/courier-orders/reports/summary"),
+  customerHistory: (phoneNumber: string) => apiRequest(`/courier-orders/customers/history?phoneNumber=${encodeURIComponent(phoneNumber)}`)
+};
+
 export const billingApi = {
   plans: () => apiRequest("/billing/plans"),
   activeSubscription: () => apiRequest("/billing/subscriptions/active"),

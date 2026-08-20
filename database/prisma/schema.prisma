@@ -83,6 +83,44 @@ enum CourierAccountStatus {
   DISABLED
 }
 
+enum CourierOrderStatus {
+  DRAFT
+  SUBMITTING
+  SUBMITTED
+  PENDING
+  IN_REVIEW
+  PICKUP_PENDING
+  IN_TRANSIT
+  DELIVERED
+  PARTIAL_DELIVERED
+  CANCELLED
+  RETURNED
+  HOLD
+  FAILED
+  UNKNOWN
+}
+
+enum CourierShipmentStatus {
+  PENDING
+  IN_REVIEW
+  PICKUP_PENDING
+  IN_TRANSIT
+  DELIVERED
+  PARTIAL_DELIVERED
+  CANCELLED
+  RETURNED
+  HOLD
+  FAILED
+  UNKNOWN
+}
+
+enum CourierStatusSource {
+  API_POLL
+  WEBHOOK
+  MANUAL_REFRESH
+  ORDER_CREATE
+}
+
 enum ProviderHealthStatus {
   ONLINE
   DEGRADED
@@ -201,6 +239,10 @@ model Tenant {
   searchHistories  SearchHistory[]
   fraudResults     FraudResult[]
   courierAccounts  CourierAccount[]
+  courierOrders     CourierOrder[]
+  orderCustomers    OrderCustomer[]
+  courierShipments  CourierShipment[]
+  courierStatusEvents CourierStatusEvent[]
   apiKeys          ApiKey[]
   authSessions     AuthSession[]
   suspiciousLoginEvents SuspiciousLoginEvent[]
@@ -241,6 +283,7 @@ model User {
   roles           UserRole[]
   subscriptions   Subscription[]
   searchHistories SearchHistory[]
+  courierOrders   CourierOrder[]
   apiKeys         ApiKey[]
   authSessions    AuthSession[]
   passwordHistory PasswordHistory[]
@@ -696,12 +739,144 @@ model CourierAccount {
   deletedAt                  DateTime?             @map("deleted_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  orders CourierOrder[]
+  shipments CourierShipment[]
 
   @@unique([tenantId, provider, label])
   @@index([tenantId, provider, isActive])
   @@index([tenantId, healthStatus])
   @@index([tenantId, deletedAt])
   @@map("courier_accounts")
+}
+
+model OrderCustomer {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  normalizedPhone String    @map("normalized_phone") @db.VarChar(24)
+  name            String    @db.VarChar(160)
+  phone           String    @db.VarChar(32)
+  secondaryPhone  String?   @map("secondary_phone") @db.VarChar(32)
+  address         String    @db.Text
+  city            String?   @db.VarChar(120)
+  area            String?   @db.VarChar(120)
+  metadata        Json?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  orders CourierOrder[]
+
+  @@unique([tenantId, normalizedPhone])
+  @@index([tenantId, normalizedPhone, createdAt])
+  @@index([tenantId, deletedAt])
+  @@map("order_customers")
+}
+
+model CourierOrder {
+  id                    String             @id @default(uuid()) @db.Uuid
+  tenantId              String             @map("tenant_id") @db.Uuid
+  userId                String             @map("user_id") @db.Uuid
+  orderCustomerId       String             @map("order_customer_id") @db.Uuid
+  selectedProvider      CourierProvider    @map("selected_provider")
+  courierAccountId      String?            @map("courier_account_id") @db.Uuid
+  merchantOrderId       String             @map("merchant_order_id") @db.VarChar(120)
+  invoiceNumber         String             @map("invoice_number") @db.VarChar(120)
+  customerName          String             @map("customer_name") @db.VarChar(160)
+  customerPhone         String             @map("customer_phone") @db.VarChar(32)
+  customerAddress       String             @map("customer_address") @db.Text
+  codAmount             Decimal            @map("cod_amount") @db.Decimal(12, 2)
+  itemDescription       String?            @map("item_description") @db.Text
+  itemQuantity          Int                @default(1) @map("item_quantity")
+  itemWeight            Decimal            @default(0.5) @map("item_weight") @db.Decimal(8, 2)
+  deliveryInstruction   String?            @map("delivery_instruction") @db.Text
+  status                CourierOrderStatus @default(DRAFT)
+  riskScore             Int?               @map("risk_score")
+  riskBadge             RiskBadge          @default(UNKNOWN) @map("risk_badge")
+  riskRecommendation    String?            @map("risk_recommendation") @db.VarChar(80)
+  riskSnapshot          Json?              @map("risk_snapshot")
+  providerPayload       Json?              @map("provider_payload")
+  providerResponse      Json?              @map("provider_response")
+  failureReason         String?            @map("failure_reason") @db.Text
+  submittedAt           DateTime?          @map("submitted_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  deletedAt             DateTime?          @map("deleted_at")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  customer       OrderCustomer   @relation(fields: [orderCustomerId], references: [id], onDelete: Restrict)
+  courierAccount CourierAccount? @relation(fields: [courierAccountId], references: [id], onDelete: SetNull)
+  shipments      CourierShipment[]
+
+  @@unique([tenantId, merchantOrderId])
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId, userId, createdAt])
+  @@index([tenantId, customerPhone, createdAt])
+  @@index([tenantId, selectedProvider, status])
+  @@index([tenantId, riskBadge, createdAt])
+  @@index([tenantId, deletedAt])
+  @@map("courier_orders")
+}
+
+model CourierShipment {
+  id                 String                @id @default(uuid()) @db.Uuid
+  tenantId           String                @map("tenant_id") @db.Uuid
+  orderId            String                @map("order_id") @db.Uuid
+  courierAccountId   String?               @map("courier_account_id") @db.Uuid
+  provider           CourierProvider
+  providerOrderId    String?               @map("provider_order_id") @db.VarChar(160)
+  trackingId         String?               @map("tracking_id") @db.VarChar(160)
+  consignmentId      String?               @map("consignment_id") @db.VarChar(160)
+  merchantInvoiceId  String?               @map("merchant_invoice_id") @db.VarChar(160)
+  deliveryFee        Decimal?              @map("delivery_fee") @db.Decimal(12, 2)
+  codCharge          Decimal?              @map("cod_charge") @db.Decimal(12, 2)
+  status             CourierShipmentStatus @default(PENDING)
+  rawStatus          String?               @map("raw_status") @db.VarChar(160)
+  lastSyncedAt       DateTime?             @map("last_synced_at")
+  nextSyncAt         DateTime?             @map("next_sync_at")
+  rawResponse        Json?                 @map("raw_response")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+  deletedAt          DateTime?             @map("deleted_at")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  order          CourierOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  courierAccount CourierAccount? @relation(fields: [courierAccountId], references: [id], onDelete: SetNull)
+  events         CourierStatusEvent[]
+
+  @@unique([tenantId, provider, trackingId])
+  @@unique([tenantId, provider, consignmentId])
+  @@index([tenantId, orderId])
+  @@index([tenantId, provider, status])
+  @@index([tenantId, trackingId])
+  @@index([tenantId, nextSyncAt])
+  @@index([tenantId, deletedAt])
+  @@map("courier_shipments")
+}
+
+model CourierStatusEvent {
+  id              String              @id @default(uuid()) @db.Uuid
+  tenantId        String              @map("tenant_id") @db.Uuid
+  shipmentId      String              @map("shipment_id") @db.Uuid
+  provider        CourierProvider
+  status          CourierShipmentStatus
+  rawStatus       String?             @map("raw_status") @db.VarChar(160)
+  messageEn       String?             @map("message_en") @db.Text
+  messageBn       String?             @map("message_bn") @db.Text
+  source          CourierStatusSource @default(API_POLL)
+  occurredAt      DateTime            @map("occurred_at")
+  rawPayload      Json?               @map("raw_payload")
+  correlationId   String?             @map("correlation_id") @db.VarChar(120)
+  createdAt       DateTime            @default(now()) @map("created_at")
+
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  shipment CourierShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, shipmentId, occurredAt])
+  @@index([tenantId, provider, status])
+  @@index([tenantId, createdAt])
+  @@map("courier_status_events")
 }
 
 model ApiKey {

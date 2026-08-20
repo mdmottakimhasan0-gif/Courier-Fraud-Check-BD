@@ -12,12 +12,13 @@ import { CoreConfigModule } from "./config/core-config.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { BillingModule } from "./modules/billing/billing.module";
 import { BusinessManagementModule } from "./modules/business-management/business-management.module";
+import { CourierOrdersModule } from "./modules/courier-orders/courier-orders.module";
 import { CourierProvidersModule } from "./modules/courier-providers/courier-providers.module";
 import { FraudSearchModule } from "./modules/fraud-search/fraud-search.module";
 import { HealthModule } from "./modules/health/health.module";
 
 @Module({
-  imports: [CoreConfigModule, HealthModule, CourierProvidersModule, FraudSearchModule, AuthModule, BusinessManagementModule, BillingModule],
+  imports: [CoreConfigModule, HealthModule, CourierProvidersModule, FraudSearchModule, AuthModule, BusinessManagementModule, BillingModule, CourierOrdersModule],
   controllers: [AppController],
   providers: [
     AppService,

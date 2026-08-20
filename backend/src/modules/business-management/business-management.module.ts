@@ -12,6 +12,6 @@ import { CredentialEncryptionService } from "./security/credential-encryption.se
   imports: [AuthModule, PrismaModule, QueueInfrastructureModule, RedisInfrastructureModule],
   controllers: [BusinessManagementController],
   providers: [AdminAuditService, BusinessManagementService, CredentialEncryptionService],
-  exports: [AdminAuditService]
+  exports: [AdminAuditService, CredentialEncryptionService]
 })
 export class BusinessManagementModule {}

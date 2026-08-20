@@ -1,5 +1,6 @@
 import {
   Activity,
+  BarChart3,
   Bell,
   BookOpen,
   BriefcaseBusiness,
@@ -17,6 +18,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   TicketPercent,
+  Truck,
   UserCog,
   Users
 } from "lucide-react";
@@ -32,6 +34,8 @@ export const portalNav = [
   { href: "/billing/usage", label: "Usage", icon: Activity },
   { href: "/api-keys", label: "API Keys", icon: KeyRound },
   { href: "/merchant-accounts", label: "Merchant Accounts", icon: BriefcaseBusiness },
+  { href: "/courier-orders", label: "Courier Orders", icon: Truck },
+  { href: "/courier-reports", label: "Courier Reports", icon: BarChart3 },
   { href: "/profile", label: "Profile", icon: UserCog },
   { href: "/security", label: "Security", icon: Shield },
   { href: "/sessions", label: "Sessions", icon: Activity },
